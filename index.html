@@ -501,17 +501,17 @@
 
             /* Modal control */
             const getUploadModal = ()=>document.getElementById('upload-modal');
-const showUploadModal = () => {
+    const showUploadModal = () => {
 
-    if (!isLoggedIn) {
-        showStatusMessage("Please login to upload products", true);
-        showAuthModal('login');
-        return;
-    }
+           if (!isLoggedIn) {
+           showStatusMessage("Please login to upload products", true);
+           showAuthModal('login');
+           return;
+      }
 
-    getUploadModal().classList.add('show');
-    getUploadModal().style.display='flex';
-};
+       getUploadModal().classList.add('show');
+       getUploadModal().style.display='flex';
+      };
             const closeUploadModal = (e)=>{ if(!e || e.target.id==='upload-modal'){ getUploadModal().classList.remove('show'); getUploadModal().style.display='none'; document.getElementById('upload-form').reset(); } };
             const getAuthModal = ()=>document.getElementById('auth-modal');
             const showAuthModal = (mode='login')=>{
