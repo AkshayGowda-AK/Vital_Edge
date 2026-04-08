@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>VitalEdge E-commerce - Glass Gallery UI</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn1H6li6kRY9lxfw4fGqQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        /* ---------- Theme tokens ---------- */
+        :root{
+            --accent: #2dd4bf; /* teal */
+            --accent-dark: #14b8a6;
+            --curator-dark: #071018; /* Nearly black background */
+            --glass-border: rgba(255,255,255,0.12);
+        }
+
+        /* ---------- Page background (Dark body/background for glass effect) ---------- */
+        body{
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+            background: radial-gradient(1200px 600px at 10% 10%, rgba(45,212,191,0.04), transparent 10%),
+                        radial-gradient(900px 500px at 90% 90%, rgba(16,185,129,0.03), transparent 12%),
+                        linear-gradient(180deg,#071018 0%, #06101b 100%);
+            min-height:100vh;
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
+            color: #0f172a; /* Default for light content */
+            padding-bottom: 4rem;
+        }
+
+        /* ---------- Fixed Sidebar Styles ---------- */
+        .user-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 280px; /* Fixed width for clarity */
+            z-index: 40;
+            padding-top: 92px; /* Clearance for header */
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-out;
+            
+            /* Glassy Dark Style */
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(15px) saturate(140%);
+            -webkit-backdrop-filter: blur(15px) saturate(140%);
+            border-right: 1px solid rgba(45, 212, 191, 0.2);
+            color: #e6eef0;
+            overflow-y: auto;
+        }
+        .user-sidebar.open {
+            transform: translateX(0);
+        }
+        .sidebar-item {
+            padding: 12px 18px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .sidebar-item:hover {
+            background: rgba(45, 212, 191, 0.1);
+        }
+        .sidebar-item.active {
+            background: rgba(45, 212, 191, 0.2);
+            color: var(--accent);
+        }
+
+        /* ---------- Header and Main adjustments for layout shift ---------- */
+        header.site-header {
+            position: fixed;
+            inset: 0 0 auto 0;
+            z-index: 50;
+            display: flex;
+            justify-content: center;
+            backdrop-filter: blur(14px) saturate(160%);
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
+            background: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+            box-shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+            padding: 0.7rem 1rem;
+        }
+
+        main.app-shell{
+            max-width: 1200px;
+            margin: 92px auto 48px;
+            padding: 32px;
+            border-radius: 14px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(250,250,250,0.95));
+            box-shadow:
+                0 10px 30px rgba(12, 20, 30, 0.08),
+                inset 0 1px 0 rgba(255,255,255,0.6);
+            border: 1px solid rgba(15, 23, 42, 0.04);
+            backdrop-filter: blur(8px);
+        }
+
+        /* Rest of the styles remain for card presentation, modals, etc. */
+        .section-title{ color: #0f172a; }
+        .section-sub{ color: #475569; }
+        .glass-card{
+            background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.65));
+            border-radius: 14px;
+            border: 1px solid rgba(15,23,42,0.06);
+            box-shadow: 0 6px 20px rgba(12,20,30,0.06);
+            overflow: hidden;
+            transition: transform .28s cubic-bezier(.2,.9,.2,1), box-shadow .28s, border-color .28s;
+            display:flex;
+            flex-direction:column;
+        }
+        .glass-card:hover{
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 18px 40px rgba(16,24,40,0.14);
+            border-color: rgba(45,212,191,0.16);
+        }
+        .glass-card .img-wrap{ height:170px; overflow:hidden; background: linear-gradient(180deg,#e6fdf9, #eafbf7 60%); display:flex; align-items:center; justify-content:center; }
+        .glass-card img{ width:100%; height:100%; object-fit:cover; display:block; transition: transform .5s ease; }
+        .glass-card:hover img{ transform: scale(1.04); }
+        .glass-card .card-body{ padding: 14px; display:flex; flex-direction:column; gap:8px; min-height:140px; }
+        .price-badge{ background: linear-gradient(90deg,var(--accent) 0%, var(--accent-dark) 100%); color: #042022; padding: 6px 10px; border-radius:999px; font-weight:700; font-size:1rem; box-shadow: 0 6px 18px rgba(45,212,191,0.12); }
+        .small-muted{ color:#6b7280; font-size:0.92rem; }
+        .hero{ display:flex; align-items:center; justify-content:space-between; gap: 1rem; margin-bottom: 1.4rem; }
+        .hero-left{ max-width: 64%; }
+        .search-box{ display:flex; gap: 0.5rem; align-items:center; margin: 18px 0; }
+        .search-field{ flex:1; border-radius: 12px; padding: 12px 14px; border: 1px solid rgba(15,23,42,0.06); background: rgba(255,255,255,0.9); display:flex; gap:8px; align-items:center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); transition: box-shadow .18s, border-color .18s, transform .12s; }
+        .search-field:focus-within{ box-shadow: 0 6px 20px rgba(45,212,191,0.06); border-color: rgba(45,212,191,0.2); transform: translateY(-1px); }
+        .chips{ display:flex; gap:8px; flex-wrap:wrap; margin-top: 12px }
+        .chip { padding: 8px 12px; border-radius: 999px; background: rgba(2,6,23,0.04); border:1px solid rgba(15,23,42,0.04); color: #0f172a; font-weight:600; font-size:0.95rem; cursor:pointer; transition: all .18s; }
+        .chip:hover{ transform: translateY(-4px); box-shadow: 0 8px 18px rgba(2,6,23,0.06) }
+        .chip.active{ background: linear-gradient(90deg,var(--accent), var(--accent-dark)); color:#052423; box-shadow: 0 8px 30px rgba(45,212,191,0.12); }
+        .brand { display:flex; gap:8px; align-items:center; font-weight:800; color:#042022; letter-spacing: -0.02em; font-size:1.25rem; }
+        .upload-btn{ background: linear-gradient(90deg,var(--accent), var(--accent-dark)); color:#042022; padding: 10px 14px; border-radius: 12px; font-weight:700; display:inline-flex; gap:8px; align-items:center; box-shadow: 0 12px 30px rgba(45,212,191,0.12); transition: transform .12s, box-shadow .12s; }
+        .upload-btn:hover{ transform: translateY(-3px) ; box-shadow: 0 20px 50px rgba(14,40,40,0.12) }
+        .header-action-btn { padding: 8px 12px; border-radius: 12px; font-size: 0.95rem; font-weight: 600; transition: all 0.15s; }
+        #auth-btn { background-color: var(--accent); color: #042022; box-shadow: 0 4px 12px rgba(45,212,191,0.25); }
+        #auth-btn:hover { background-color: var(--accent-dark); }
+        #cart-btn { background-color: #f1f5f9; color: #042022; border: 1px solid rgba(15, 23, 42, 0.1); }
+        footer.site-footer{ max-width:1200px; margin: 0 auto; color:#94a3b8; text-align:center; padding:16px; }
+        .modal-backdrop{ position:fixed; inset:0; z-index:80; display:none; align-items:center; justify-content:center; background:rgba(2,6,23,0.6); backdrop-filter: blur(8px) saturate(140%); -webkit-backdrop-filter: blur(8px) saturate(140%); }
+        .modal{ width:100%; max-width:700px; background: linear-gradient(180deg, rgba(10,14,18,0.88), rgba(8,10,12,0.84)); border-radius: 14px; border: 1px solid rgba(255,255,255,0.04); box-shadow: 0 30px 80px rgba(2,6,23,0.7); padding: 20px; color: #e6eef0; transform: translateY(10px); transition: transform .18s ease, opacity .18s; }
+        .modal.show{ display:flex; }
+        .modal .modal-head{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
+        .modal .input, .modal select, .modal textarea{ width:100%; border-radius: 10px; padding:10px 12px; background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); color: #e6eef0; outline:none; transition: box-shadow .12s, border-color .12s; }
+        .modal .input:focus, .modal select:focus, .modal textarea:focus{ border-color: rgba(45,212,191,0.18); box-shadow: 0 8px 30px rgba(45,212,191,0.06); }
+        .modal .btn{ padding:10px 12px; border-radius:10px; font-weight:700; cursor:pointer; border: none; }
+        .modal .btn.primary{ background: linear-gradient(90deg,var(--accent), var(--accent-dark)); color:#042022; box-shadow:0 12px 30px rgba(45,212,191,0.12); }
+        .modal .btn.ghost{ background:transparent; color:#cbd5e1; border:1px solid rgba(255,255,255,0.04); }
+        .modal #auth-toggle-btn { background-color: transparent; border: none; color: var(--accent); text-decoration: underline; }
+        .modal select option { color: #0d1117; background: #e6eef0; }
+
+        
+
+    /* existing styles */
+
+    .category-dropdown {
+        display: none;
+    }
+
+    .category-menu:hover .category-dropdown {
+        display: block;
+    }
+
+    .category-dropdown .chip:hover {
+        background: rgba(45,212,191,0.15);
+    }
+
+
+
+
+
+
+    </style>
+
+    <script>
+        // Use a generic Inter font configuration (Tailwind defaults to system UI which usually works)
+        // **FIX: Re-introducing Tailwind Config Block for Class recognition**
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'curator-accent': '#2dd4bf',
+                        'curator-accent-2': '#14b8a6',
+                        'curator-dark': '#0d1117'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="inner">
+            
+
+            <div class="flex items-center gap-4">
+                <div class="brand" onclick="setView('home')" style="cursor:pointer">
+                    <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(90deg,var(--accent),var(--accent-dark));box-shadow: 0 6px 18px rgba(45,212,191,0.12);display:flex;align-items:center;justify-content:center;color:#042022;font-weight:800;">VE</div>
+                    <div>
+                        <div style="font-size: 18px;line-height:1">VitalEdge<span style="color:var(--accent)"> E-commerce</span></div>
+                        <div style="font-size:11px;color:#6b7280;margin-top:1px">Gallery & Verified Finds</div>
+                    </div>
+                </div>
+
+<div class="hidden md:flex items-center gap-4 ml-8" id="main-nav">
+
+<button class="chip" onclick="setView('home')">Home</button>
+<button class="chip" onclick="setView('profile')">Profile</button>
+<div class="relative">
+
+    <button class="chip" onclick="toggleCategoryMenu()">Categories ▼</button>
+
+    <div id="category-dropdown"
+         class="absolute left-0 mt-2 w-48 bg-white shadow-lg rounded-lg border border-gray-200 hidden"
+         style="z-index:100">
+
+        <div class="chip block w-full text-left" onclick="selectCategory('Electronics')">Electronics</div>
+        <div class="chip block w-full text-left" onclick="selectCategory('Apparel')">Apparel</div>
+        <div class="chip block w-full text-left" onclick="selectCategory('Home Goods')">Home Goods</div>
+        <div class="chip block w-full text-left" onclick="selectCategory('Books')">Books</div>
+        <div class="chip block w-full text-left" onclick="selectCategory('Sports')">Sports</div>
+        <div class="chip block w-full text-left" onclick="selectCategory('Furniture')">Furniture</div>
+
+    </div>
+
+</div>
+
+
+
+<button class="chip" onclick="setView('trending')">Trending</button>
+
+<button class="upload-btn" onclick="showUploadModal()">+ Upload Product</button>
+
+<button class="chip" onclick="setView('mysubmissions')">My Submissions</button>
+
+
+
+            <div class="flex items-center gap-3">
+                <div id="header-actions" class="hidden md:flex items-center gap-3">
+                    
+
+                    <button id="auth-btn" class="header-action-btn" onclick="isLoggedIn ? handleLogout() : showAuthModal()">
+                        <span id="auth-label">Login / Signup</span>
+                    </button>
+
+                    <button id="cart-btn" class="header-action-btn" onclick="setView('cart')">
+                        <svg xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 12.87a2 2 0 0 0 2 1.63h9.72a2 2 0 0 0 2-1.63L23 6H6"/></svg>
+                        <span id="cart-count-label" style="margin-left:6px">Cart (0)</span>
+                    </button>
+                </div>
+
+                <div class="md:hidden">
+                    <button onclick="toggleMobileMenu()" class="p-2 rounded-md border border-gray-100/6">
+                        <svg xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    
+
+    <main class="app-shell" id="app-root">
+        </main>
+
+    <footer class="site-footer">© 2024 VitalEdge E-commerce | Design: Glass Gallery</footer>
+
+    <div id="upload-modal" class="modal-backdrop" onclick="closeUploadModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-head">
+                <h3 style="font-size:20px;font-weight:800">Submit a New Artifact</h3>
+                <button onclick="closeUploadModal()" class="btn ghost" style="padding:8px 10px;border-radius:8px">Close</button>
+            </div>
+
+            <form id="upload-form" onsubmit="handleUploadSubmit(event)" class="space-y-3">
+                <div>
+                    <label class="small-muted">Product Name</label>
+                    <input class="input" id="product-name" name="product-name" required placeholder="e.g., The Quantum Timepiece" />
+                </div>
+                <div>
+                    <label class="small-muted">Description</label>
+                    <textarea id="product-description" name="product-description" rows="3" class="input" required placeholder="Provide a detailed, elegant description."></textarea>
+                </div>
+               ,<div> 
+            <label class="small-muted">Price</label>
+<input id="product-price" name="product-price" type="number" step="0.01" class="input" required />
+       </div>        
+<div class="flex gap-2">
+                    <div style="flex:1">
+                        <label class="small-muted">Category</label>
+                        <select id="product-category" name="product-category" required class="input">
+                            <option value="" disabled selected style="color:#6b7280; background:#fff;">Select a category</option>
+                            <option value="Electronics" style="color:#0f172a; background:#fff;">Electronics</option>
+                            <option value="Apparel" style="color:#0f172a; background:#fff;">Apparel</option>
+                            <option value="Home Goods" style="color:#0f172a; background:#fff;">Home Goods</option>
+                            <option value="Books" style="color:#0f172a; background:#fff;">Books & Media</option>
+                            <option value="Sports" style="color:#0f172a; background:#fff;">Sports</option>
+                            <option value="Furniture" style="color:#0f172a; background:#fff;">Furniture</option>
+                            <option value="Miscellaneous" style="color:#0f172a; background:#fff;">Miscellaneous</option>
+                        </select>
+                    </div>
+                    <div style="flex:1">
+                        <label class="small-muted">Purchase URL</label>
+                        <input id="purchase-url" name="purchase-url" type="url" class="input" placeholder="https://www.amazon.in/product-..." required />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="small-muted">Image (optional)</label>
+                    <input id="product-image" name="product-image" type="file" accept="image/*" class="input" />
+                </div>
+
+                <div class="flex gap-3 justify-end">
+                    <button type="button" onclick="closeUploadModal()" class="btn ghost">Cancel</button>
+                    <button type="submit" class="btn primary">Submit for Curation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <div id="edit-modal" class="modal-backdrop" onclick="closeEditModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-head">
+            <h3 style="font-size:20px;font-weight:800">Edit Product</h3>
+            <button onclick="closeEditModal()" class="btn ghost">Close</button>
+        </div>
+
+        <form id="edit-form" onsubmit="handleEditSubmit(event)" class="space-y-3">
+            <input type="hidden" id="edit-product-id">
+
+            <div>
+                <label class="small-muted">Product Name</label>
+                <input id="edit-name" class="input" required />
+            </div>
+
+            <div>
+                <label class="small-muted">Description</label>
+                <textarea id="edit-description" rows="3" class="input" required></textarea>
+            </div>
+
+            <div>
+                <label class="small-muted">Price</label>
+                <input id="edit-price" type="number" step="0.01" class="input" required />
+            </div>
+
+            <div class="flex gap-3 justify-end">
+                <button type="button" onclick="closeEditModal()" class="btn ghost">Cancel</button>
+                <button type="submit" class="btn primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="delete-modal" class="modal-backdrop" onclick="closeDeleteModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+
+        <div class="modal-head">
+            <h3 style="font-size:20px;font-weight:800;color:#ef4444">
+                Confirm Delete
+            </h3>
+            <button onclick="closeDeleteModal()" class="btn ghost">Close</button>
+        </div>
+
+        <p style="margin:15px 0">
+            Are you sure you want to delete this product?
+        </p>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px">
+            <button class="btn ghost" onclick="closeDeleteModal()">Cancel</button>
+            <button class="btn primary" onclick="confirmDelete()">Delete</button>
+        </div>
+
+    </div>
+</div>
+
+
+    <div id="auth-modal" class="modal-backdrop" onclick="closeAuthModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-head">
+                <h3 id="auth-title" style="font-weight:800">Login</h3>
+                <button onclick="closeAuthModal()" class="btn ghost" style="padding:8px 10px;border-radius:8px">Close</button>
+            </div>
+
+            <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-3">
+                <div>
+                    <label class="small-muted">Username / Email / Mobile</label>
+                    <input id="auth-identifier" name="auth-identifier" class="input" required />
+                </div>
+                <div>
+                    <label class="small-muted">Password</label>
+                    <input id="auth-password" name="auth-password" type="password" class="input" required />
+                </div>
+
+                <div id="signup-fields" style="display:none" class="space-y-2">
+                    <input id="auth-confirm-password" name="auth-confirm-password" type="password" placeholder="Confirm password" class="input" />
+                    <input id="auth-name" name="auth-name" placeholder="Full name" class="input" />
+                    <input id="auth-city" name="auth-city" placeholder="City / Location" class="input" />
+                </div>
+
+                <div class="flex gap-3 justify-end">
+                    <button type="button" onclick="toggleAuthMode()" class="btn ghost">Toggle Signup</button>
+                    <button id="auth-submit-btn" type="submit" class="btn primary">Log In</button>
+                </div>
+
+                <div style="margin-top:6px" class="small-muted">
+                    <span id="auth-toggle-message">Don't have an account?</span>
+                    <button id="auth-toggle-btn" class="chip" type="button" onclick="toggleAuthMode()" style="color:var(--accent); text-decoration:underline;">Sign Up</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        /* ---------- JS state & logic (adapted from your original file) ---------- */
+
+        // App state
+        let currentView = 'home';
+        let currentFilter = 'date-desc';
+        let currentSearchTerm = '';
+        let currentCategoryFilter = '';
+        let isLoggedIn = false;
+        let currentUser = { id: 'guest', username: 'Guest' };
+        let cartItems = {}; cartItems[currentUser.id] = [];
+
+        // Sidebar state
+        let sidebarOpen = false;
+
+        const initialCategories = {
+            'Electronics': 0, 'Apparel': 0, 'Home Goods': 0, 'Books': 0,
+            'Sports': 0, 'Furniture': 0, 'Miscellaneous': 0,
+        };
+        let userPreferences = { ...initialCategories };
+
+       let products = [];
+
+
+            /* Initialize preferences */
+            const initializeUserPreferences = () => {
+                products.forEach(p => {
+                    if (userPreferences.hasOwnProperty(p.category)) userPreferences[p.category] += 1;
+                });
+            };
+
+            const getPreferredCategory = () => {
+                let best=null, max=-1;
+                for (const k in userPreferences) if (userPreferences[k]>max){max=userPreferences[k]; best=k;}
+                return max>0?best:null;
+            };
+            
+            
+
+            
+            
+            // New Function: Profile Settings Simulation
+            const handleProfileSettings = () => {
+                showStatusMessage('Accessing Profile Settings... (Simulation successful)');
+                // In a real application, this would open a new modal or navigate to a profile editing page.
+            };
+
+
+            /* Helpers: icons & logos */
+            const getIconSvg = (name, size=18) => {
+                const icons = {
+                    'Search': `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+                    'Shield': `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+                };
+                return icons[name]||'';
+            };
+            const getSourceLogoSvg = (s, size=14) => {
+                const map = {
+                    'Amazon': `<i class="fa-brands fa-amazon" style="font-size:${size}px;color:#b77c1f"></i>`,
+                    'Flipkart': `<i class="fas fa-shopping-bag" style="font-size:${size}px;color:#2b6cb0"></i>`,
+                    'Meesho': `<i class="fa-solid fa-shirt" style="font-size:${size}px;color:#f472b6"></i>`,
+                    'Myntra': `<i class="fas fa-star" style="font-size:${size}px;color:#ef4444"></i>`
+                };
+                return map[s]||`<i class="fas fa-link" style="font-size:${size}px;color:#94a3b8"></i>`;
+            };
+
+            /* Small UI helpers */
+            const showStatusMessage = (text, isError=false) => {
+                const existing = document.querySelector('.status-message'); if(existing) existing.remove();
+                const el = document.createElement('div');
+                el.className = 'status-message fixed right-6 bottom-6 p-3 rounded-lg text-sm font-semibold';
+                el.style.zIndex = 120;
+                el.style.background = isError ? 'linear-gradient(90deg,#ef4444,#dc2626)' : 'linear-gradient(90deg,var(--accent),var(--accent-dark))';
+                el.style.color = isError ? '#fff' : '#042022';
+                el.textContent = text;
+                document.body.appendChild(el);
+                setTimeout(()=>el.remove(),3800);
+            };
+
+            const showLoginRequired = () => {
+    showStatusMessage("Please login to continue", true);
+    showAuthModal('login');
+};
+
+            /* Modal control */
+            const getUploadModal = ()=>document.getElementById('upload-modal');
+const showUploadModal = () => {
+
+    if (!isLoggedIn) {
+        showStatusMessage("Please login to upload products", true);
+        showAuthModal('login');
+        return;
+    }
+
+    getUploadModal().classList.add('show');
+    getUploadModal().style.display='flex';
+};
+            const closeUploadModal = (e)=>{ if(!e || e.target.id==='upload-modal'){ getUploadModal().classList.remove('show'); getUploadModal().style.display='none'; document.getElementById('upload-form').reset(); } };
+            const getAuthModal = ()=>document.getElementById('auth-modal');
+            const showAuthModal = (mode='login')=>{
+                authMode = mode;
+                document.getElementById('auth-title').textContent = mode==='login'?'Log In':'Sign Up';
+                document.getElementById('auth-submit-btn').textContent = mode==='login'?'Log In':'Sign Up';
+                updateAuthFormFields();
+                getAuthModal().classList.add('show'); getAuthModal().style.display='flex';
+            };
+            const closeAuthModal = (e)=>{ if(!e || e.target.id==='auth-modal'){ getAuthModal().classList.remove('show'); getAuthModal().style.display='none'; document.getElementById('auth-form').reset(); } };
+
+            /* Mobile menu placeholder */
+            function toggleMobileMenu(){ alert('Mobile menu — you can implement a slide menu here if needed') }
+
+            /* Auth logic (preserve from original) */
+            let authMode = 'login';
+            const updateAuthFormFields = () => {
+                const signupFields = document.getElementById('signup-fields');
+                const confirmPass = document.getElementById('auth-confirm-password');
+                const nameField = document.getElementById('auth-name');
+                const cityField = document.getElementById('auth-city');
+                if (authMode==='signup'){ signupFields.style.display='block'; confirmPass.required=true; nameField.required=true; cityField.required=true; }
+                else { signupFields.style.display='none'; confirmPass.required=false; nameField.required=false; cityField.required=false; }
+            };
+            const toggleAuthMode = ()=>{ authMode = authMode==='login'?'signup':'login'; showAuthModal(authMode); }
+
+            const handleAuthSubmit = async (event) => {
+    event.preventDefault();
+
+    const form = event.target;
+
+    const identifier = form.elements['auth-identifier'].value;
+    const password = form.elements['auth-password'].value;
+
+    try {
+
+        // ---------------- SIGNUP ----------------
+        if (authMode === 'signup') {
+
+            const name = form.elements['auth-name'].value;
+            const city = form.elements['auth-city'].value;
+
+            const response = await fetch('/api/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: name,
+                    email: identifier,
+                    password: password,
+                    city: city
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showStatusMessage("Signup successful. Please login.");
+                toggleAuthMode();
+            } else {
+                showStatusMessage(data.message, true);
+            }
+
+        }
+
+        // ---------------- LOGIN ----------------
+        else {
+
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    identifier: identifier,
+                    password: password
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                isLoggedIn = true;
+                currentUser = data.user;
+
+                showStatusMessage(`Welcome, ${data.user.username}!`);
+
+                loadCart();
+
+                closeAuthModal();
+                renderHeaderState();
+                setView('home');
+
+            } else {
+                showStatusMessage("Invalid login credentials", true);
+            }
+        }
+
+    } catch (error) {
+        showStatusMessage("Server error", true);
+        console.error(error);
+    }
+};
+
+
+            const handleLogout = ()=>{ isLoggedIn=false; currentUser={id:'guest',username:'Guest'}; showStatusMessage('Logged out', true); setView('home'); renderHeaderState(); }
+
+            /* Upload handling (keeps your stricter URL validation) */
+            const handleUploadSubmit = (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const name = form.elements['product-name'].value.trim();
+                const description = form.elements['product-description'].value.trim();
+                const category = form.elements['product-category'].value.trim();
+                const purchaseUrl = form.elements['purchase-url'].value.trim();
+                const amazonRegex = /(amazon\.(com|in|co\.uk|de|jp|ca|co|es|fr|it|nl)\/.*(dp|gp\/product)\/)/i;
+                const flipkartRegex = /(flipkart\.com.*\/p\/)|(dl\.flipkart\.com\/s\/)/i;
+                const meeshoRegex = /(meesho\.com\/.*\/p\/)|(meesho\.com\/(i|s)\/)/i;
+                const myntraRegex = /(myntra\.com\/.*(\-sku[0-9]+|[0-9]{5,}\/))/i;
+
+                let source = '';
+                if (amazonRegex.test(purchaseUrl)) source='Amazon';
+                else if (flipkartRegex.test(purchaseUrl)) source='Flipkart';
+                else if (meeshoRegex.test(purchaseUrl)) source='Meesho';
+                else if (myntraRegex.test(purchaseUrl)) source='Myntra';
+                else { showStatusMessage('URL must be Amazon/Flipkart/Meesho/Myntra product link.', true); return; }
+
+                const imageFile = form.elements['product-image'].files[0];
+const formData = new FormData();
+
+formData.append("name", name);
+formData.append("description", description);
+formData.append("category", category);
+formData.append("purchaseLink", purchaseUrl);
+formData.append("source", source);
+const price = form.elements['product-price'].value;
+formData.append("price", price);
+formData.append("image", imageFile);
+formData.append("user_id", currentUser.id);
+
+fetch('/api/add-product', {
+    method: 'POST',
+    body: formData
+})
+.then(res => res.json())
+.then(data => {
+    if (data.success) {
+        showStatusMessage(`Added: ${name}`);
+
+        fetch('/api/products')
+            .then(res => res.json())
+            .then(data => {
+                products = data.map(p => ({
+                    ...p,
+                    addedDate: new Date(p.addedDate)
+                }));
+                renderApp();
+            });
+
+        closeUploadModal();
+    } else {
+        showStatusMessage(data.message || "Upload failed", true);
+    }
+});
+
+
+                const cleanName = name.replace(/\\u2019/g, "'");
+let imageUrl = `https://placehold.co/600x400?text=${encodeURIComponent(cleanName)}`;
+
+
+
+                const newProduct = {
+                    id: products.length+1,
+                    name, price: (Math.random()*1000).toFixed(2), description, imageUrl, isVerified:true, purchaseLink:purchaseUrl, category, addedDate:new Date(), source
+                };
+
+
+
+
+                userPreferences[category] = (userPreferences[category]||0)+1;
+
+
+
+            };
+
+            /* Cart logic */
+            const getCartCount = () => {
+
+    const cart = cartItems[currentUser.id] || [];
+
+    let total = 0;
+
+    cart.forEach(item => {
+        total += item.quantity;
+    });
+
+    return total;
+
+};
+            const calculateCartTotal = () =>
+    (cartItems[currentUser.id] || [])
+    .reduce((s, i) => s + (i.price * i.quantity), 0);
+            const addToCart = (productId) => {
+
+    if (!isLoggedIn) {
+        showLoginRequired();
+        return;
+    }
+
+    fetch('/api/add-to-cart', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            user_id: currentUser.id,
+            product_id: productId
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showStatusMessage("Added to cart");
+            loadCart();
+        }
+    });
+};
+
+
+const removeFromCart = (productId) => {
+
+    fetch('/api/remove-from-cart', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            user_id: currentUser.id,
+            product_id: productId
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success){
+
+            showStatusMessage("Removed from cart");
+
+            fetch(`/api/cart/${currentUser.id}`)
+            .then(res => res.json())
+            .then(cart => {
+                cartItems[currentUser.id] = cart;
+                renderApp();      // refresh cart UI immediately
+                renderHeaderState();
+            });
+
+        }
+    });
+};
+
+            const loadCart = () => {
+
+    if (!isLoggedIn) return;
+
+    fetch(`/api/cart/${currentUser.id}`)
+        .then(res => res.json())
+        .then(data => {
+
+            cartItems[currentUser.id] = data;
+
+            renderHeaderState();   // update cart count
+        });
+};
+
+
+            /* Search & filter */
+            const applyFilteringAndSearching = (list) => {
+                let out = [...list];
+                if(currentSearchTerm){
+
+    const term = currentSearchTerm.toLowerCase();
+
+    out = out.filter(p =>
+        p.name.toLowerCase().includes(term) ||
+        p.description.toLowerCase().includes(term) ||
+        p.category.toLowerCase().includes(term)
+    );
+
+}
+                switch(currentFilter){
+                    case 'price-asc': out.sort((a,b)=>a.price-b.price); break;
+                    case 'price-desc': out.sort((a,b)=>b.price-a.price); break;
+                    case 'date-asc': out.sort((a,b)=>a.addedDate-b.addedDate); break;
+                    default: out.sort((a,b)=>b.addedDate-a.addedDate); break;
+                }
+                return out;
+            };
+
+            const handleSearchAndFilter = () => {
+
+    const input = document.getElementById("search-input");
+
+    if (!input) return;
+
+    currentSearchTerm = input.value.toLowerCase().trim();
+    currentFilter = document.getElementById("filter-select").value;
+
+    updateProductGrid();
+
+};
+            /* UI builders: product card, header chips */
+            const createProductCard = (p, idx=0) => {
+                const price = parseFloat(p.price).toFixed(2);
+                const verified = p.isVerified ? `<div class="flex items-center gap-2 text-xs text-[#065f52] font-semibold">${getIconSvg('Shield',14)}Verified</div>` : '';
+                return `
+                    <div class="glass-card">
+                        <div class="img-wrap">
+                            <img src="${p.imageUrl}" alt="${p.name}" loading="${idx<6?'eager':'lazy'}" onerror="this.src='https://placehold.co/600x400/fff/9ca3af?text=Image+Not+Found'"/>
+                        </div>
+                        <div class="card-body">
+                            <div class="flex items-start justify-between gap-2">
+                                <div>
+                                    <div style="font-weight:700;color:#042022">${p.name}</div>
+                                    <div class="small-muted">${p.category} • ${p.source || '—'}</div>
+                                </div>
+                                <div class="price-badge">₹${price}</div>
+                            </div>
+                            <p class="small-muted" style="margin-top:6px;flex:1">${p.description.length>100? p.description.slice(0,100)+'...' : p.description}</p>
+
+                            <div class="flex items-center justify-between mt-3 gap-2">
+                                <div class="flex items-center gap-2">${verified}${getSourceLogoHtml(p.source)}</div>
+                                <div class="flex items-center gap-2">
+    ${
+        isLoggedIn
+        ? `
+            <button class="chip" onclick="addToCart(${p.id})">Add to Cart</button>
+            <button class="chip" onclick="window.open('${p.purchaseLink||'#'}','_blank')">Buy</button>
+          `
+        : `
+            <button class="chip" onclick="showLoginRequired()">Add to Cart</button>
+            <button class="chip" onclick="showLoginRequired()">Buy</button>
+          `
+    }
+
+    ${isLoggedIn && Number(p.user_id) === Number(currentUser.id)
+? `
+    <button class="chip" onclick="openEditModal(${p.id})">Edit</button>
+    <button class="chip" onclick="openDeleteModal(${p.id})">Delete</button>
+  `
+: ``}
+
+</div>
+
+                            </div>
+                        </div>
+                    </div>
+                `;
+            };
+
+            const getSourceLogoHtml = (s) => {
+                if(!s) return '';
+                return getSourceLogoSvg(s,14);
+            };
+
+            /* Create header chips */
+            const renderHeaderChips = () => {
+
+    const container = document.getElementById('header-chips');
+    if(!container) return;
+
+    container.innerHTML = '';
+
+    // HOME button
+    const home = document.createElement('button');
+    home.className = 'chip';
+    home.innerText = 'Home';
+    home.onclick = () => {
+        currentCategoryFilter = '';
+        currentSearchTerm = '';
+        setView('home');
+    };
+    container.appendChild(home);
+
+    // Category buttons
+    Object.keys(initialCategories).forEach(cat=>{
+        const el = document.createElement('button');
+        el.className = 'chip';
+        el.innerText = cat;
+
+        if(cat===currentCategoryFilter) el.classList.add('active');
+
+        el.onclick = ()=>{
+            filterByCategory(cat);
+        };
+
+        container.appendChild(el);
+    });
+
+
+                // add all chip
+                const all = document.createElement('button'); all.className='chip'; all.innerText='All'; if(!currentCategoryFilter) all.classList.add('active'); all.onclick=()=>{ filterByCategory('')}; container.appendChild(all);
+            
+            };
+            //delete product
+            const deleteProduct = (id) => {
+
+    const confirmDelete = confirm("Delete this product permanently? This action cannot be undone.");
+
+    if (!confirmDelete) return;
+
+    fetch(`/api/delete-product/${id}?user_id=${currentUser.id}`, {
+        method: 'DELETE'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success){
+            showStatusMessage("Product deleted");
+            fetchProducts();
+        } else {
+            showStatusMessage(data.message, true);
+        }
+    });
+
+};
+
+
+            const filterByCategory = (cat) => { currentCategoryFilter = cat; setView('categories'); renderHeaderChips(); };
+
+            /* Render header dynamic state */
+           const renderHeaderState = () => {
+
+    const count = getCartCount();
+    const cartLabel = document.getElementById("cart-count-label");
+    if (cartLabel) {
+        cartLabel.textContent = `Cart (${count})`;
+    }
+
+    const authLabel = document.getElementById("auth-label");
+
+    if (authLabel) {
+        if (isLoggedIn) {
+            authLabel.textContent = `Logout (${currentUser.username})`;
+        } else {
+            authLabel.textContent = "Login / Signup";
+        }
+    }
+
+};
+
+            /* Search & filter bar HTML builder (returned as string) */
+            const createSearchAndFilterBarHtml = () => {
+                return `
+                    <div class="search-box">
+                        <div class="search-field" style="flex:1">
+                            ${getIconSvg('Search',16)}
+                            <input id="search-input" type="text" placeholder="Search products or keywords..." style="border:none;background:transparent;outline:none;flex:1;padding:6px 8px" oninput="handleSearchAndFilter()" />
+                            <select id="filter-select" onchange="currentFilter=this.value; renderApp()" style="border:none;background:transparent;outline:none;padding:6px 8px;border-left:1px solid rgba(15,23,42,0.04)">
+                                <option value="date-desc" ${currentFilter==='date-desc'?'selected':''}>Newest Added</option>
+                                <option value="date-asc" ${currentFilter==='date-asc'?'selected':''}>Oldest Added</option>
+                                <option value="price-desc" ${currentFilter==='price-desc'?'selected':''}>Price: High to Low</option>
+                                <option value="price-asc" ${currentFilter==='price-asc'?'selected':''}>Price: Low to High</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            };
+
+            /* Pages: Home, Categories, Cart, MySubmissions (NEW) */
+            const getEmptyStateHtml = (msg) => `<div style="padding:32px;text-align:center;border:2px dashed rgba(15,23,42,0.06);border-radius:12px;color:#64748b">${msg}</div>`;
+
+            const renderHomePage = () => {
+                let title = 'Welcome to The VitalEdge Gallery';
+                let desc = 'Personalized picks and curated finds.';
+                const limit = 8;
+                let list = [];
+
+                if(currentSearchTerm){
+                    const processed = applyFilteringAndSearching(products);
+                    list = processed.slice(0, limit);
+                    title = `Search: "${currentSearchTerm}" (${list.length})`;
+                    desc = `Top results across categories.`;
+                } else {
+                    const preferred = getPreferredCategory();
+                    if(preferred){
+                        const rec = applyFilteringAndSearching(products.filter(p => p.category===preferred)).slice(0,limit);
+                        list = rec;
+                        title = `Suggested for you — ${preferred}`;
+                        desc = `Based on your recent activity in ${preferred}.`;
+                        if(list.length < limit){
+                            const needed = limit - list.length;
+                            const filler = products.filter(p=>p.category!==preferred).slice(0,needed);
+                            list = [...list, ...filler];
+                        }
+                    } else {
+                        list = applyFilteringAndSearching(products).slice(0,limit);
+                    }
+                }
+
+                const cardsHtml = list.length ? list.map((p,i)=>createProductCard(p,i)).join('') : getEmptyStateHtml('No items found — try uploading a product or clearing filters.');
+
+                return `
+                    <section>
+                        <div class="hero">
+                            <div class="hero-left">
+                                <h1 class="section-title" style="font-size:28px;margin-bottom:6px">${title}</h1>
+                                <p class="section-sub">
+<strong>VitalEdge</strong> is a curated product discovery platform where users can upload
+verified products from Amazon, Flipkart, Myntra and build a trusted gallery of quality finds.
+</p>
+                                
+                            </div>
+                            <div style="text-align:right">
+                                </div>
+                        </div>
+
+                        ${createSearchAndFilterBarHtml()}
+
+                        <div id="product-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-top:16px">
+                            ${cardsHtml}
+                        </div>
+                    </section>
+                `;
+            };
+
+            const renderCategoriesPage = () => {
+                const productsToFilter = currentCategoryFilter ? products.filter(p=>p.category===currentCategoryFilter) : products;
+                const processed = applyFilteringAndSearching(productsToFilter);
+                if(!processed.length) return `<section><h2 class="section-title">No items</h2>${getEmptyStateHtml('No products in this category or with the selected filters.')}</section>`;
+                const grouped = {};
+                processed.forEach(p=>{ grouped[p.category] = grouped[p.category] || []; grouped[p.category].push(p);});
+                const html = Object.keys(grouped).map(cat => {
+                    const cards = grouped[cat].map((p,i)=>createProductCard(p,i)).join('');
+                    return `<div style="margin-bottom:28px"><h3 style="font-weight:800;margin-bottom:12px">${cat} (${grouped[cat].length})</h3><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px">${cards}</div></div>`;
+                }).join('');
+                return `<section><h1 class="section-title">Browse Categories</h1><p class="section-sub">Explore curated items grouped by type</p>${createSearchAndFilterBarHtml()}${html}</section>`;
+            };
+
+            const renderSubmissionsPage = () => {
+                // Simulate showing ALL products as "My Submissions" for demo purposes
+                const submissions = applyFilteringAndSearching(
+    products.filter(p => Number(p.user_id) === Number(currentUser.id))
+);
+                const cardsHtml = submissions.map((p,i)=>createProductCard(p,i)).join('');
+                const count = submissions.length;
+                
+                return `
+                    <section>
+                        <h1 class="section-title">My Submissions (${count})</h1>
+                        <p class="section-sub">Items you have committed to the gallery archive.</p>
+                        ${createSearchAndFilterBarHtml()}
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-top:16px">
+                            ${count > 0 ? cardsHtml : getEmptyStateHtml('You have not submitted any artifacts yet.')}
+                        </div>
+                    </section>
+                `;
+            };
+
+            const renderCartPage = () => {
+                const cart = cartItems[currentUser.id]||[];
+                if(!cart.length) return `<section><h1 class="section-title">Your Cart</h1>${getEmptyStateHtml('Your cart is empty. Add curated items to begin checkout.')}</section>`;
+                const rows = cart.map(i=>`
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfbfb);border:1px solid rgba(15,23,42,0.04);margin-bottom:10px">
+                        <div style="display:flex;align-items:center;gap:12px">
+                            <img src="${i.imageUrl}" style="width:64px;height:64px;object-fit:cover;border-radius:8px" />
+                            <div>
+                                <div style="font-weight:700;color:#042022">${i.name}</div>
+                                <div style="color:#6b7280;font-size:13px">Qty: ${i.quantity} • ${i.category}</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:12px">
+                            <div style="font-weight:800;color:var(--accent)">₹${(i.price*i.quantity).toFixed(2)}</div>
+                            <button class="chip" onclick="removeFromCart(${i.product_id})">Remove</button>
+                        </div>
+                    </div>
+                `).join('');
+                const total = calculateCartTotal().toFixed(2);
+                return `<section><h1 class="section-title">Your Cart (${cart.length})</h1><div>${rows}</div><div style="margin-top:18px;display:flex;justify-content:flex-end;gap:12px"><div style="font-weight:800;font-size:18px;margin-right:8px">Total: ₹${total}</div><button class="upload-btn" onclick="setView('home')" style="padding:10px 14px">
+Continue Shopping →
+</button></div></section>`;
+            };
+
+            /* App renderer */
+            const renderApp = () => {
+                const root = document.getElementById('app-root');
+                let html = '';
+                if(currentView==='home') html = renderHomePage();
+                else if(currentView==='categories') html = renderCategoriesPage();
+                else if(currentView==='trending') html = renderTrendingPage();
+                else if(currentView==='cart') html = renderCartPage();
+                else if(currentView==='mysubmissions') html = renderSubmissionsPage(); // NEW PAGE
+                else if(currentView==='profile') html = renderProfilePage();
+                else html = renderHomePage();
+                root.innerHTML = html;
+                renderHeaderChips();
+                renderHeaderState();
+                
+                
+            };
+
+            const setView = (v) => { 
+                // Close sidebar when navigating away from it
+                
+                currentView=v; 
+                renderApp(); 
+                window.scrollTo({top:0,behavior:'smooth'}); 
+            };
+
+            /* Simple initializers */
+           document.addEventListener("DOMContentLoaded", function () {
+
+    fetch('/api/products')
+        .then(res => res.json())
+        .then(data => {
+
+            products = data.map(p => ({
+                ...p,
+                addedDate: new Date(p.addedDate)
+            }));
+
+            initializeUserPreferences();
+
+            currentView = 'home';   // force it
+            renderApp();            // force render
+
+        })
+        .catch(err => {
+            console.error("Error loading products:", err);
+        });
+
+    document.addEventListener('keydown', (e)=>{
+        if(e.key === 'Escape'){
+            closeUploadModal();
+            closeAuthModal();
+        }
+    });
+
+});
+
+const editProduct = (id) => {
+
+    const product = products.find(p => p.id == id);
+
+    const newName = prompt("Edit name:", product.name);
+    if (!newName) return;
+
+    const newDesc = prompt("Edit description:", product.description);
+    if (!newDesc) return;
+
+    const newPrice = prompt("Edit price:", product.price);
+    if (!newPrice) return;
+
+    fetch(`/api/edit-product/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            user_id: currentUser.id,
+            name: newName,
+            description: newDesc,
+            price: newPrice
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success){
+            showStatusMessage("Product updated");
+            fetchProducts();
+        } else {
+            showStatusMessage(data.message, true);
+        }
+    });
+};
+
+const fetchProducts = () => {
+    fetch('/api/products')
+        .then(res => res.json())
+        .then(data => {
+            products = data.map(p => ({
+                ...p,
+                addedDate: new Date(p.addedDate)
+            }));
+            renderApp();
+        });
+};
+
+const getEditModal = () => document.getElementById('edit-modal');
+
+const openEditModal = (productId) => {
+
+    const product = products.find(p => p.id == productId);
+
+    document.getElementById('edit-product-id').value = product.id;
+    document.getElementById('edit-name').value = product.name;
+    document.getElementById('edit-description').value = product.description;
+    document.getElementById('edit-price').value = product.price;
+
+    getEditModal().classList.add('show');
+    getEditModal().style.display = 'flex';
+};
+
+const closeEditModal = (e) => {
+    if (!e || e.target.id === 'edit-modal') {
+        getEditModal().classList.remove('show');
+        getEditModal().style.display = 'none';
+    }
+};
+
+const handleEditSubmit = (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById('edit-product-id').value;
+    const name = document.getElementById('edit-name').value;
+    const description = document.getElementById('edit-description').value;
+    const price = document.getElementById('edit-price').value;
+
+    console.log("Sending data:", {
+        user_id: currentUser.id,
+        name,
+        description,
+        price
+    });
+
+    fetch(`/api/edit-product/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            user_id: currentUser.id,
+            name,
+            description,
+            price
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        console.log("Server response:", data);
+
+        if(data.success){
+            showStatusMessage("Product updated successfully");
+            closeEditModal();
+            fetchProducts();
+        } else {
+            showStatusMessage(data.message || "Update failed", true);
+        }
+    });
+};
+
+const renderTrendingPage = () => {
+
+    const trending = [...products]
+        .sort((a,b)=>b.price-a.price)
+        .slice(0,8);
+
+    const cards = trending.map((p,i)=>createProductCard(p,i)).join('');
+
+    return `
+    <section>
+        <h1 class="section-title">🔥 Trending Products</h1>
+        <p class="section-sub">Most popular curated items</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-top:16px">
+            ${cards}
+        </div>
+    </section>
+    `;
+};
+
+const renderProfilePage = () => {
+
+    if(!isLoggedIn){
+        return `
+        <section>
+            <h1 class="section-title">Profile</h1>
+            <p class="section-sub">Please login to view your profile</p>
+        </section>
+        `;
+    }
+
+    return `
+    <section>
+        <h1 class="section-title">My Profile</h1>
+
+        <div class="glass-card" style="max-width:500px;padding:20px">
+
+            <p><strong>Username:</strong> ${currentUser.username}</p>
+            <p><strong>User ID:</strong> ${currentUser.id}</p>
+            <p><strong>City:</strong> ${currentUser.city || "Not specified"}</p>
+
+            <div style="margin-top:20px">
+                <button class="chip" onclick="setView('mysubmissions')">My Products</button>
+                <button class="chip" onclick="setView('cart')">My Cart</button>
+                <button class="chip" onclick="handleLogout()">Logout</button>
+            </div>
+
+        </div>
+    </section>
+    `;
+};
+
+function toggleCategoryMenu() {
+
+    const menu = document.getElementById("category-dropdown");
+
+    if(menu.classList.contains("hidden")){
+        menu.classList.remove("hidden");
+    } else {
+        menu.classList.add("hidden");
+    }
+
+}
+
+function selectCategory(category){
+
+    document.getElementById("category-dropdown").classList.add("hidden");
+
+    filterByCategory(category);
+
+}
+document.addEventListener("click", function(event){
+
+    const menu = document.getElementById("category-dropdown");
+
+    if(!event.target.closest(".relative")){
+        menu.classList.add("hidden");
+    }
+
+});
+
+const updateProductGrid = () => {
+
+    const productsToFilter = currentCategoryFilter
+        ? products.filter(p => p.category === currentCategoryFilter)
+        : products;
+
+    const filtered = applyFilteringAndSearching(productsToFilter);
+
+    const grid = document.querySelector("#product-grid");
+
+    if(!grid) return;
+
+    grid.innerHTML = filtered.length
+        ? filtered.map((p,i)=>createProductCard(p,i)).join('')
+        : getEmptyStateHtml('No items found');
+
+};
+    
+let deleteProductId = null;
+
+const openDeleteModal = (id) => {
+    deleteProductId = id;
+
+    const modal = document.getElementById("delete-modal");
+    modal.classList.add("show");
+    modal.style.display = "flex";
+};
+
+const closeDeleteModal = (e) => {
+    if (!e || e.target.id === "delete-modal") {
+        const modal = document.getElementById("delete-modal");
+        modal.classList.remove("show");
+        modal.style.display = "none";
+    }
+};
+
+const confirmDelete = () => {
+
+    fetch(`/api/delete-product/${deleteProductId}?user_id=${currentUser.id}`, {
+        method: 'DELETE'
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if(data.success){
+            showStatusMessage("Product deleted");
+            fetchProducts();
+        }
+
+        closeDeleteModal();
+    });
+
+};
+
+
+
+        </script>
+</body>
+</html>
